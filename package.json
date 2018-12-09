@@ -1,0 +1,30 @@
+{
+  "name": "asn1",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ava --watch",
+    "test": "ava"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shishidosoichiro/asn1.git"
+  },
+  "keywords": [
+    "asn1",
+    "asn.1"
+  ],
+  "author": "Soichiro Shishido",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/shishidosoichiro/asn1/issues"
+  },
+  "homepage": "https://github.com/shishidosoichiro/asn1#readme",
+  "devDependencies": {
+    "ava": "^0.25.0"
+  },
+  "dependencies": {
+    "safer-buffer": "^2.1.2"
+  }
+}
