@@ -22,7 +22,7 @@ module.exports = class BerReader {
 		this.buffer = Buffer.concat([this.buffer, buffer]);
 	}
 
-	// undefined:
+	// undefined: fail to parse.
 	//
 	read() {
 		this.readSize = 0;
