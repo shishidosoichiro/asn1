@@ -201,6 +201,21 @@ test('read sequence', async t => {
 });
 
 
+test('パスワードpasswordを持つユーザーcn=testに対する簡易認証を使用したバインド・リクエスト', async t => {
+	var bindRequest = Buffer.from([
+		0x60,
+		0x16,
+		0x02, 0x01, 0x03,
+		0x04, 0x07, 0x63, 0x6E, 0x3D, 0x74, 0x65, 0x73, 0x74,
+		0x80, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6F, 0x72, 0x64
+	]);
+	const reader = new BerReader();
+	reader.write(bindRequest);
+	const value = reader.read();
+	t.truthy(value);
+	t.deepEqual(value, [true], 'wrong value');
+});
+
 test('anonymous LDAPv3 bind', async t => {
 	var BIND = Buffer.alloc(14);
 	BIND[0] = 0x30;	// Sequence
