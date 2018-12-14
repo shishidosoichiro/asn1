@@ -1,5 +1,5 @@
 const assert = require('assert');
-const TYPES = require('./types');
+const TYPE = require('./types');
 
 const TAG_CLASS = {
 	UNIVERSAL:	      0, // The type is native to ASN.1
@@ -22,20 +22,88 @@ module.exports = class BerReader {
 		this.buffer = Buffer.concat([this.buffer, buffer]);
 	}
 
+	get length() {
+		return this.buffer.length - this.index;
+	}
+
+	get filled() {
+		const index = this.begin();
+		try {
+			const tag = this.readTag();
+			const length = this.readLength();
+			return length <= this.length;
+		}
+		finally {
+			this.rollback(index);
+		}
+	}
+
+	begin() {
+		return this.index;
+	}
+
+	rollback(index) {
+		this.index = index;
+	}
+
+	commit() {
+		this.buffer = this.buffer.slice(this.index);
+		this.index = 0;
+	}
+
+	/**
+	*/
+	readInt() {
+		return this.read(TYPE.INTEGER);
+	}
+
+	/**
+	*/
+	readBoolean() {
+		return this.read(TYPE.BOOLEAN);
+	}
+
+	/**
+	*/
+	readOctetString(encoding) {
+		return this.read(TYPE.OCTET_STRING, encoding);
+	}
+
+	/**
+	*/
+	readEnumerated(encoding) {
+		return this.read(TYPE.ENUMERATED, encoding);
+	}
+
+	/**
+	*/
+	readSequence() {
+		return this.read(TYPE.SEQUENCE);
+	}
+
+	/**
+	*/
+	readChoice(choice) {
+		return this.read(TYPE.CHOICE, choice);
+	}
+
 	// undefined: fail to parse.
 	//
-	read() {
+	read(type, ...args) {
 		this.readSize = 0;
 
 		const tag = this.readTag();
 		if (tag === undefined) return undefined;
+		type = type || tag.tagNumber
+		//if (typeof type === 'number' && type !== tag.tagNumber)
+		//	throw new TypeError(`Unmatched type. type=${type} tag.tagNumber=${tag.tagNumber}`);
 
 		const length = this.readLength();
 		if (length === undefined) return undefined;
 		if (length === 0) return undefined;
 
 		if (
-		   (tag.tagNumber === TYPES.SEQUENCE) ||
+		   (type === TYPE.SEQUENCE) ||
 		   (tag.tagClass === 1 && tag.pc === 1)
 		) {
 			const seq = [];
@@ -53,17 +121,18 @@ module.exports = class BerReader {
 			return seq;
 		}
 
-		const value = this.readBytes(length);
-		if (value === undefined) return undefined;
+		const bytes = this.readBytes(length);
+		if (bytes === undefined) return undefined;
 
-		switch (tag.tagNumber) {
-			case TYPES.BOOLEAN:
-				return value[0] !== 0;
-			case TYPES.INTEGER:
-			case TYPES.ENUMERATED:
-				return parseInt(value);
-			case TYPES.OCTET_STRING:
-				return Buffer.from(value).toString('utf8');
+		switch (type) {
+			case TYPE.BOOLEAN:
+				return bytes[0] !== 0;
+			case TYPE.INTEGER:
+			case TYPE.ENUMERATED:
+				return parseInt(bytes);
+			case TYPE.OCTET_STRING:
+				const encoding = args[0] || 'utf8';
+				return Buffer.from(bytes).toString(encoding);
 			default:
 		}
 	}
@@ -73,27 +142,40 @@ module.exports = class BerReader {
 		this.readSize++;
 		return this.buffer[this.index++]
 	}
+	readBytes(length = 1) {
+		if (this.buffer.length <= 0) return undefined;
+		if (this.length < length) return undefined;
 
-	garbage() {
-		this.buffer = this.buffer.slice(this.index);
-		this.index = 0;
+		const array = [];
+		for (var i = 0; i < length; i++) {
+			array[i] = this.buffer[this.index + i];
+			this.readSize++;
+		}
+		this.index = this.index + length
+		return array;
 	}
 
-	readTag() {
-		const tag = parseTag(this.readByte());
-		if (tag.tagNumber !== 0x1f)
-			return tag // 0001 1111
+	readTag(commit = true) {
+		const transaction = this.begin();
+		try {
+			const tag = parseTag(this.readByte());
+			if (tag.tagNumber !== 0x1f)
+				return tag // 0001 1111
 
-		// Long
-		tag.tagNumber = 0;
-		var continuing = 1;
-		while (continuing) {
-			const byte = this.readByte();
-			tag.bytes++;
-			tag.tagNumber = (tag.tagNumber << 7) | (byte & 0x7f); // 0111 1111
-			continuing = byte >> 7;
+			// Long
+			tag.tagNumber = 0;
+			var continuing = 1;
+			while (continuing) {
+				const byte = this.readByte();
+				tag.tagNumber = (tag.tagNumber << 7) | (byte & 0x7f); // 0111 1111
+				tag.bytes.push(byte);
+				continuing = byte >> 7;
+			}
+			return tag;
 		}
-		return tag;
+		finally {
+			if (!commit) this.rollback(transaction);
+		}
 	}
 
 	readLength() {
@@ -108,13 +190,6 @@ module.exports = class BerReader {
 		return parseInt(bytes);
 	}
 
-	readBytes(length) {
-		const array = [];
-		for (var i = 0; i < length; i++) {
-			array[i] = this.readByte();
-		}
-		return array;
-	}
 }
 
 function parseTag(byte) {
@@ -122,7 +197,7 @@ function parseTag(byte) {
 		tagClass: byte >> 6,
 		pc: (byte & 0x3f) >> 5, // 0011 1111
 		tagNumber: byte & 0x1f, // 0001 1111
-		bytes: 1
+		bytes: [byte]
 	};
 }
 
