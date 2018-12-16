@@ -42,7 +42,7 @@ module.exports = class BerReader {
 		return this.index;
 	}
 
-	rollback(index) {
+	rollback(index = 0) {
 		this.index = index;
 	}
 
@@ -100,7 +100,6 @@ module.exports = class BerReader {
 
 		const length = this.readLength();
 		if (length === undefined) return undefined;
-		if (length === 0) return undefined;
 
 		if (
 		   (type === TYPE.SEQUENCE) ||
@@ -187,7 +186,7 @@ module.exports = class BerReader {
 			return length;
 
 		const bytes = this.readBytes(length);
-		return parseInt(bytes);
+		return parseInt(bytes, true);
 	}
 
 }
@@ -205,7 +204,7 @@ function object(tag, length, value) {
 	return { tag, length, value };
 }
 
-function parseInt(bytes) {
+function parseInt(bytes, natural = false) {
 	const length = bytes.length;
 	if (length < 1) return undefined;
 
@@ -214,10 +213,11 @@ function parseInt(bytes) {
 	for (var i = 0; i < length; i++) {
 		int = int | (bytes[i] << ((length - i - 1) * 8));
 	}
+
 	// Integer is 4 byte
 	if (length >= 4) return int;
 
-	if (minus)
+	if (minus && !natural)
 		return int - (1 << (length * 8));
 
 	return int;

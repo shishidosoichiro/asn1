@@ -251,38 +251,31 @@ test('anonymous LDAPv3 bind', async t => {
 
 	const encoder = new BerEncoder();
 	encoder.write(BIND);
-	const value = encoder.read();
-	t.truthy(value);
-	t.deepEqual(value, [true], 'wrong value');
-
-	//// Start testing ^^
-	//var ber = encoder.read(BIND);
-	//t.is(ber.readSequence(), 48, 'Not an ASN.1 Sequence');
-	//t.is(ber.length, 12, 'Message length should be 12');
-	//t.is(ber.readInt(), 4, 'Message id should have been 4');
-	//t.is(ber.readSequence(), 96, 'Bind Request should have been 96');
-	//t.is(ber.length, 7, 'Bind length should have been 7');
-	//t.is(ber.readInt(), 3, 'LDAP version should have been 3');
-	//t.is(ber.readString(), '', 'Bind DN should have been empty');
-	//t.is(ber.length, 0, 'string length should have been 0');
-	//t.is(ber.readByte(), 0x80, 'Should have been ContextSpecific (choice)');
-	//t.is(ber.readByte(), 0, 'Should have been simple bind');
-	//t.is(null, ber.readByte(), 'Should be out of data');
-	//t.end();
+	t.is(encoder.readByte(), 48);
+	t.is(encoder.readLength(), 12);
+	t.is(encoder.readInt(), 4);
+	t.is(encoder.readByte(), 96);
+	t.is(encoder.readLength(), 7);
+	t.is(encoder.readInt(), 3);
+	t.is(encoder.readOctetString(), '');
+	t.is(encoder.readByte(), 128);
+	t.is(encoder.readLength(), 0);
+	t.is(encoder.readByte(), undefined);
 });
 
 
-test.skip('long string', async t => {
+test('long string', async t => {
 	var buf = Buffer.alloc(256);
 	var s =
 		'2;649;CN=Red Hat CS 71GA Demo,O=Red Hat CS 71GA Demo,C=US;' +
 		'CN=RHCS Agent - admin01,UID=admin01,O=redhat,C=US [1] This is ' +
 		'Teena Vradmin\'s description.';
 	buf[0] = 0x04;
-	buf[1] = 0x81;
-	buf[2] = 0x94;
+	buf[1] = 0x81; // 1000 0001
+	buf[2] = 0x94; // 128 + 16 + 4 = 148
 	buf.write(s, 3);
-	var ber = encoder.read(buf.slice(0, 3 + s.length));
-	t.is(ber.readString(), s);
-	t.end();
+
+	const encoder = new BerEncoder();
+	encoder.write(buf);
+	t.is(encoder.readOctetString(), s);
 });
