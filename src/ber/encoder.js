@@ -15,7 +15,7 @@ const PC = {
 
 module.exports = class BerReader {
 	constructor() {
-		this.buffer = new Buffer([]);
+		this.buffer = Buffer.from([]);
 		this.index = 0;
 	}
 	write(buffer) {
@@ -136,22 +136,34 @@ module.exports = class BerReader {
 		}
 	}
 
-	readByte() {
+	readByte(commit = true) {
 		if (this.buffer.length <= 0) return undefined;
-		this.readSize++;
-		return this.buffer[this.index++]
+		try {
+			return this.buffer[this.index];
+		}
+		finally {
+			if (!commit) return;
+			this.readSize++;
+			this.index++;
+		}
 	}
-	readBytes(length = 1) {
+	readBytes(length = 1, commit = true) {
 		if (this.buffer.length <= 0) return undefined;
 		if (this.length < length) return undefined;
 
-		const array = [];
-		for (var i = 0; i < length; i++) {
-			array[i] = this.buffer[this.index + i];
-			this.readSize++;
+		try {
+			const array = [];
+			for (var i = 0; i < length; i++) {
+				array[i] = this.buffer[this.index + i];
+			}
+			return array;
 		}
-		this.index = this.index + length
-		return array;
+		finally {
+			if (!commit) return;
+			this.readSize += length;
+			this.index += length;
+		}
+
 	}
 
 	readTag(commit = true) {
