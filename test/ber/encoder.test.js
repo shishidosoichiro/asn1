@@ -75,7 +75,7 @@ test('.read() should return Boolean.', async t => {
 test('read byte', async t => {
 	const encoder = new BerEncoder();
 	encoder.write(Buffer.from([0xde]));
-	t.is(encoder.readByte(), 0xde, 'wrong value');
+	t.is(encoder.readByte(), 0xde);
 });
 
 
@@ -84,7 +84,7 @@ test('read 1 byte int', async t => {
 	encoder.write(Buffer.from([0x02, 0x01, 0x03]));
 	const value = encoder.readInt();
 	t.truthy(value);
-	t.is(value, 3, 'wrong value');
+	t.is(value, 3);
 });
 
 
@@ -93,7 +93,7 @@ test('read 2 byte int', async t => {
 	encoder.write(Buffer.from([0x02, 0x02, 0x7e, 0xde]));
 	const value = encoder.readInt();
 	t.truthy(value);
-	t.is(value, 0x7ede, 'wrong value');
+	t.is(value, 0x7ede);
 });
 
 
@@ -102,7 +102,7 @@ test('read 3 byte int', async t => {
 	encoder.write(Buffer.from([0x02, 0x03, 0x7e, 0xde, 0x03]));
 	const value = encoder.readInt();
 	t.truthy(value);
-	t.is(value, 0x7ede03, 'wrong value');
+	t.is(value, 0x7ede03);
 });
 
 
@@ -111,7 +111,7 @@ test('read 4 byte int', async t => {
 	encoder.write(Buffer.from([0x02, 0x04, 0x7e, 0xde, 0x03, 0x01]));
 	const value = encoder.readInt();
 	t.truthy(value);
-	t.is(value, 0x7ede0301, 'wrong value');
+	t.is(value, 0x7ede0301);
 });
 
 
@@ -120,7 +120,7 @@ test('read 1 byte negative int', async t => {
 	encoder.write(Buffer.from([0x02, 0x01, 0xdc]));
 	const value = encoder.readInt();
 	t.truthy(value);
-	t.is(value, -36, 'wrong value');
+	t.is(value, -36);
 });
 
 
@@ -129,7 +129,7 @@ test('read 2 byte negative int', async t => {
 	encoder.write(Buffer.from([0x02, 0x02, 0xc0, 0x4e]));
 	const value = encoder.readInt();
 	t.truthy(value);
-	t.is(value, -16306, 'wrong value');
+	t.is(value, -16306);
 });
 
 
@@ -138,7 +138,7 @@ test('read 3 byte negative int', async t => {
 	encoder.write(Buffer.from([0x02, 0x03, 0xff, 0x00, 0x19]));
 	const value = encoder.readInt();
 	t.truthy(value);
-	t.is(value, -65511, 'wrong value');
+	t.is(value, -65511);
 });
 
 
@@ -147,7 +147,7 @@ test('read 4 byte negative int', async t => {
 	encoder.write(Buffer.from([0x02, 0x04, 0x91, 0x7c, 0x22, 0x1f]));
 	const value = encoder.readInt();
 	t.truthy(value);
-	t.is(value, -1854135777, 'wrong value');
+	t.is(value, -1854135777);
 });
 
 
@@ -155,7 +155,7 @@ test('read boolean true', async t => {
 	const encoder = new BerEncoder();
 	encoder.write(Buffer.from([0x01, 0x01, 0xff]));
 	const value = encoder.readBoolean();
-	t.is(value, true, 'wrong value');
+	t.is(value, true);
 });
 
 
@@ -163,7 +163,7 @@ test('read boolean false', async t => {
 	const encoder = new BerEncoder();
 	encoder.write(Buffer.from([0x01, 0x01, 0x00]));
 	const value = encoder.readBoolean();
-	t.is(value, false, 'wrong value');
+	t.is(value, false);
 });
 
 
@@ -172,7 +172,7 @@ test('read enumeration', async t => {
 	encoder.write(Buffer.from([0x0a, 0x01, 0x20]));
 	const value = encoder.readEnumerated();
 	t.truthy(value);
-	t.is(value, 0x20, 'wrong value');
+	t.is(value, 0x20);
 });
 
 
@@ -187,7 +187,7 @@ test('read string', async t => {
 	encoder.write(buffer);
 	const value = encoder.readOctetString();
 	t.truthy(value);
-	t.is(value, dn, 'wrong value');
+	t.is(value, dn);
 	t.is(value.length, dn.length, 'wrong length');
 });
 
@@ -197,11 +197,11 @@ test('read sequence', async t => {
 	encoder.write(Buffer.from([0x30, 0x03, 0x01, 0x01, 0xff]));
 	const value = encoder.readSequence();
 	t.truthy(value);
-	t.deepEqual(value, [true], 'wrong value');
+	t.deepEqual(value, [true]);
 });
 
 
-test('パスワードpasswordを持つユーザーcn=testに対する簡易認証を使用したバインド・リクエスト', async t => {
+test('BindRequest with simple bind for user cn=test whose password is `password`.', async t => {
 	var bindRequest = Buffer.from([
 		0x60,
 		0x16,
