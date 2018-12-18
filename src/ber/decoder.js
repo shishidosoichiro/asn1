@@ -6,24 +6,43 @@ module.exports = class BerDecoder {
 		this.buffer = Buffer.from([]);
 	}
 	write(bytes){
-		this.buffer = this.buffer.values().concat(bytes);
+		if (typeof bytes === 'number') bytes = [bytes];
+		this.buffer = Buffer.concat([this.buffer, Buffer.from(bytes)]);
 	}
 	writeBoolean(boolean){
-		this.write(bytifyTag(TAG_CLASS.UNIVERSAL, PC.PRIMITIVE, TYPES.BOOLEAN));
+		this.write(bytifyTag(TAG_CLASS.UNIVERSAL, PC.PRIMITIVE, TYPE.BOOLEAN));
 		this.write(1);
 		this.write(boolean ? 1 : 0);
 	}
 	writeInt(int){
-		this.write(bytifyTag(TAG_CLASS.UNIVERSAL, PC.PRIMITIVE, TYPES.INTEGER));
-		const length = calcurateByteOfInteger(int);
-		this.write(length);
-		for (var i = 0; i < length; i++) {
-			const byte = (int >> ((length - i - 1) * 8)) & 0xff;
-			this.write(byte)
+		//if (int >= (1 << 32)) throw new TypeError(`integer must be less than 1^32. int=${int}`);
+		this.write(bytifyTag(TAG_CLASS.UNIVERSAL, PC.PRIMITIVE, TYPE.INTEGER));
+		if (int === 0) {
+			this.write(1);
+			this.write(0);
+			return;
 		}
+		const minus = int < 0;
+		//if (minus) int = int + Math.pow(2, 32);
+		if (minus) int = ~(-1 * int) + 1;
+
+		if (minus) console.log(int, int >> 8 & 0xff, int >> 16 & 0xff, int >> 24 & 0xff)
+
+		const bytes = [];
+		while (int >= 1) {
+			if (minus) console.log(int, int & 0xff)
+			bytes.unshift(int & 0xff);
+			int = int >> 8
+		}
+		if (bytes.length < 4 && bytes[0] >= 0x80) {
+			bytes.unshift(minus ? 0x80 : 0x00);
+		}
+
+		this.write(bytes.length)
+		this.write(bytes)
 	}
 	writeOctetString(string, encoding = 'utf8'){
-		this.write(bytifyTag(TAG_CLASS.UNIVERSAL, PC.PRIMITIVE, TYPES.OCTET_STRING));
+		this.write(bytifyTag(TAG_CLASS.UNIVERSAL, PC.PRIMITIVE, TYPE.OCTET_STRING));
 		const buffer = Buffer.from(string, encoding);
 		this.write(buffer.length);
 		this.write(buffer);
@@ -31,9 +50,7 @@ module.exports = class BerDecoder {
 }
 
 function bytifyTag(tagClass, pc, tagNumber) {
-	return (tagClass << 7)
-	& (pc << 5)
-	& (tagNumber << 5);
+	return (tagClass << 7) | (pc << 5) | tagNumber;
 }
 function calcurateByteOfInteger(int) {
 	// plus

@@ -2,11 +2,11 @@
 
 import test from 'ava';
 import { Buffer } from 'safer-buffer';
-import BerEncoder from '../../src/ber/encoder';
+import Encoder from '../../src/ber/encoder';
 
 
 test('.readByte() should return a byte.', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x6c, 0x33]));
 	encoder.write(Buffer.from([0xdf, 0xf5, 0xaa, 0x5f]));
 	t.is(encoder.readByte(), 0x6c);
@@ -20,14 +20,14 @@ test('.readByte() should return a byte.', async t => {
 })
 
 test('.readBytes() should return .', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x83, 0xaa, 0xbb, 0x44, 0x33])); // 1000 0003
 	t.deepEqual(encoder.readBytes(2), [0x83, 0xaa]);
 	t.deepEqual(encoder.readBytes(3), [0xbb, 0x44, 0x33]);
 })
 
 test('.readTag() should return a tag.', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x6c, 0x33])); // 0110 1100
 	const tag = encoder.readTag();
 	t.is(tag.tagClass, 1);
@@ -36,7 +36,7 @@ test('.readTag() should return a tag.', async t => {
 })
 
 test('.readTag() should return a long form tag.', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	// 1101 1111 1111 0101 1010 1010 0101 1111
 	// tag number: 1 1101 0101 0101 0101 1111 => 0x1d555f
 	encoder.write(Buffer.from([0xdf, 0xf5, 0xaa, 0x5f]));
@@ -47,21 +47,21 @@ test('.readTag() should return a long form tag.', async t => {
 })
 
 test('.readLength() should return a length which is less than 128 bits.', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x6c, 0x33])); // 0110 1100
 	const length = encoder.readLength();
 	t.is(length, 108);
 })
 
 test('.readLength() should return a length which is more than 127 bits.', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x83, 0x2a, 0xbb, 0x44, 0x33])); // 1000 0003
 	const length = encoder.readLength();
 	t.is(length, 0x2abb44);
 })
 
 test('.read() should return Boolean.', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x01, 0x01, 0x01]));
 	t.is(encoder.readBoolean(), true);
 
@@ -73,14 +73,14 @@ test('.read() should return Boolean.', async t => {
 
 
 test('read byte', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0xde]));
 	t.is(encoder.readByte(), 0xde);
 });
 
 
 test('read 1 byte int', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x02, 0x01, 0x03]));
 	const value = encoder.readInt();
 	t.truthy(value);
@@ -89,7 +89,7 @@ test('read 1 byte int', async t => {
 
 
 test('read 2 byte int', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x02, 0x02, 0x7e, 0xde]));
 	const value = encoder.readInt();
 	t.truthy(value);
@@ -98,7 +98,7 @@ test('read 2 byte int', async t => {
 
 
 test('read 3 byte int', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x02, 0x03, 0x7e, 0xde, 0x03]));
 	const value = encoder.readInt();
 	t.truthy(value);
@@ -107,7 +107,7 @@ test('read 3 byte int', async t => {
 
 
 test('read 4 byte int', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x02, 0x04, 0x7e, 0xde, 0x03, 0x01]));
 	const value = encoder.readInt();
 	t.truthy(value);
@@ -116,7 +116,7 @@ test('read 4 byte int', async t => {
 
 
 test('read 1 byte negative int', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x02, 0x01, 0xdc]));
 	const value = encoder.readInt();
 	t.truthy(value);
@@ -125,7 +125,7 @@ test('read 1 byte negative int', async t => {
 
 
 test('read 2 byte negative int', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x02, 0x02, 0xc0, 0x4e]));
 	const value = encoder.readInt();
 	t.truthy(value);
@@ -134,7 +134,7 @@ test('read 2 byte negative int', async t => {
 
 
 test('read 3 byte negative int', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x02, 0x03, 0xff, 0x00, 0x19]));
 	const value = encoder.readInt();
 	t.truthy(value);
@@ -143,7 +143,7 @@ test('read 3 byte negative int', async t => {
 
 
 test('read 4 byte negative int', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x02, 0x04, 0x91, 0x7c, 0x22, 0x1f]));
 	const value = encoder.readInt();
 	t.truthy(value);
@@ -152,7 +152,7 @@ test('read 4 byte negative int', async t => {
 
 
 test('read boolean true', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x01, 0x01, 0xff]));
 	const value = encoder.readBoolean();
 	t.is(value, true);
@@ -160,7 +160,7 @@ test('read boolean true', async t => {
 
 
 test('read boolean false', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x01, 0x01, 0x00]));
 	const value = encoder.readBoolean();
 	t.is(value, false);
@@ -168,7 +168,7 @@ test('read boolean false', async t => {
 
 
 test('read enumeration', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x0a, 0x01, 0x20]));
 	const value = encoder.readEnumerated();
 	t.truthy(value);
@@ -183,7 +183,7 @@ test('read string', async t => {
 	buffer[1] = Buffer.byteLength(dn);
 	buffer.write(dn, 2);
 
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(buffer);
 	const value = encoder.readOctetString();
 	t.truthy(value);
@@ -193,7 +193,7 @@ test('read string', async t => {
 
 
 test('read sequence', async t => {
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(Buffer.from([0x30, 0x03, 0x01, 0x01, 0xff]));
 	const value = encoder.readSequence();
 	t.truthy(value);
@@ -209,7 +209,7 @@ test('BindRequest with simple bind for user cn=test whose password is `password`
 		0x04, 0x07, 0x63, 0x6E, 0x3D, 0x74, 0x65, 0x73, 0x74,      // cn=test
 		0x80, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6F, 0x72, 0x64 // password
 	]);
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(bindRequest);
 
 	t.is(encoder.filled, true);
@@ -249,7 +249,7 @@ test('anonymous LDAPv3 bind', async t => {
 	BIND[12] = 0x80; // ContextSpecific (choice)
 	BIND[13] = 0;		// simple bind
 
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(BIND);
 	t.is(encoder.readByte(), 48);
 	t.is(encoder.readLength(), 12);
@@ -275,7 +275,7 @@ test('long string', async t => {
 	buf[2] = 0x94; // 128 + 16 + 4 = 148
 	buf.write(s, 3);
 
-	const encoder = new BerEncoder();
+	const encoder = new Encoder();
 	encoder.write(buf);
 	t.is(encoder.readOctetString(), s);
 });
