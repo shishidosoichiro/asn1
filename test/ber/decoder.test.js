@@ -5,9 +5,10 @@ import { Buffer } from 'safer-buffer';
 import Decoder from '../../src/ber/decoder';
 
 
-test('.writeByte() should write a byte.', async t => {
+test('.write() should write a byte.', async t => {
 	const decoder = new Decoder();
-	
+	decoder.write(0x12);
+	t.deepEqual(decoder.buffer, Buffer.from([0x12]));
 })
 
 test('read 1 byte int', async t => {

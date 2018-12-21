@@ -22,24 +22,21 @@ module.exports = class BerDecoder {
 			this.write(0);
 			return;
 		}
-		const minus = int < 0;
-		//if (minus) int = int + Math.pow(2, 32);
-		if (minus) int = ~(-1 * int) + 1;
 
-		if (minus) console.log(int, int >> 8 & 0xff, int >> 16 & 0xff, int >> 24 & 0xff)
+		var length = 4;
+		while (((int & 0xff800000) === 0 || (int & 0xff800000) === 0xff800000 >> 0) && length > 1) {
+			int <<= 8;
+			length--;
+		}
 
 		const bytes = [];
-		while (int >= 1) {
-			if (minus) console.log(int, int & 0xff)
-			bytes.unshift(int & 0xff);
-			int = int >> 8
-		}
-		if (bytes.length < 4 && bytes[0] >= 0x80) {
-			bytes.unshift(minus ? 0x80 : 0x00);
+		while (int) {
+			bytes.push((int & 0xff000000) >> 24);
+			int <<= 8;
 		}
 
-		this.write(bytes.length)
-		this.write(bytes)
+		this.write(length);
+		this.write(bytes);
 	}
 	writeOctetString(string, encoding = 'utf8'){
 		this.write(bytifyTag(TAG_CLASS.UNIVERSAL, PC.PRIMITIVE, TYPE.OCTET_STRING));
